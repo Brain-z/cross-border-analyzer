@@ -88,3 +88,10 @@ python3 scripts/vendor/fastmoss-rpa/fastmoss_rpa.py market base \
 - `bsk status` 无浏览器连接：确认扩展弹窗已变绿、fastmoss.com 已登录；
 - 字段为空：多为套餐权限限制，保留原样，不编造；
 - 其余见上游 `UPSTREAM_SKILL.md` 的 gotchas（SPA 等待、JS 转义、编码等）。
+
+## Token 预算（强制）
+
+- 抓取只运行脚本，落盘后**不读 CSV 全文**；用 `wc -l <out>` 确认行数即可。
+- 不要逐页 `evaluate` 打印表格内容；脚本输出就是最终结果。
+- 失败按上方排错清单一次排查、一次重试，禁止同一命令反复试错。
+- bsk 的 daemon/编码/路径问题脚本已自动处理，不要为此展开调查。
