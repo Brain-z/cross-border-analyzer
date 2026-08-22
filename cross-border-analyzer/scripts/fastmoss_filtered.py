@@ -7,6 +7,7 @@
 """
 
 import argparse
+import datetime
 import json
 import os
 import subprocess
@@ -17,12 +18,22 @@ import time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VENDOR = os.path.join(ROOT, "scripts", "vendor", "fastmoss-rpa")
 sys.path.insert(0, VENDOR)
-from sections import NEXT_PAGE_JS  # noqa: E402
 
 FIELDS = ["page", "rank", "product_name", "price", "listed_at", "country",
           "shop", "shop_total_sales", "category", "commission",
           "sales_period", "sales_growth", "gmv_period",
           "total_sales", "total_gmv"]
+
+# 新版 FastMoss 分页：真正的"下一页"按钮是 li.ant-pagination-next，
+# 社区工具的 li[class*=next] 可能误点"跳页省略号"（before/after-jump-next）。
+PAGE_NEXT_JS = """(() => {
+  const sel = 'li.ant-pagination-next:not(.ant-pagination-disabled), ' +
+              'li[title="下一页"]:not([class*=disabled])';
+  const btn = document.querySelector(sel);
+  if (!btn) return JSON.stringify({clicked:false});
+  btn.click();
+  return JSON.stringify({clicked:true});
+})()"""
 
 HEADER_MAP = {
     "排名": "rank", "商品": "product_name", "国家/地区": "country",
@@ -151,11 +162,25 @@ def scrape(url, out, session, start=None, end=None, time_label=None,
     for page in range(1, pages + 1):
         data = evaluate(EXTRACT_JS, session)
         if "error" in data:
-            break
+            if page == 1:
+                break
+            time.sleep(3)
+            data = evaluate(EXTRACT_JS, session)
+            if "error" in data:
+                break
+        added = 0
         for row in parse_rows(data.get("header", []), data.get("rows", [])):
             row["page"] = page
-            all_rows.setdefault((row["product_name"], row["shop"]), row)
-        nxt = evaluate(NEXT_PAGE_JS, session)
+            key = (row["product_name"], row["shop"])
+            if key not in all_rows:
+                all_rows[key] = row
+                added += 1
+        if added == 0 and page > 1:
+            break
+        nxt = evaluate(PAGE_NEXT_JS, session)
+        if not nxt.get("clicked"):
+            time.sleep(3)
+            nxt = evaluate(PAGE_NEXT_JS, session)
         if not nxt.get("clicked"):
             break
         time.sleep(page_sleep)
@@ -182,8 +207,10 @@ def main():
 
     if args.board == "new":
         url = "https://www.fastmoss.com/zh/e-commerce/newProducts"
+        end = datetime.date.today()
+        start = end - datetime.timedelta(days=29)
         scrape(url, args.out, args.session,
-               start="2026-07-22", end="2026-08-21",
+               start=start.isoformat(), end=end.isoformat(),
                pages=args.pages, nav_sleep=args.nav_sleep, page_sleep=args.page_sleep)
     else:
         url = "https://www.fastmoss.com/zh/e-commerce/saleslist"
