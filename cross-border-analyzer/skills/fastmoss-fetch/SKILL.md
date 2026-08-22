@@ -19,13 +19,14 @@ description: "从 FastMoss（fastmoss.com）抓取 TikTok Shop 榜单数据：�
 
 ## 抓取命令（社区工具）
 
-从插件根目录执行：
+从插件根目录执行。**分工**：商品榜的"新品 / 销量榜单 + 月榜 / 日期范围 +
+国家与品类组合"用薄适配器 `scripts/fastmoss_filtered.py`（社区工具一次只能筛一个维度，
+且只覆盖新品榜）；达人 / 店铺 / 广告 / 素材 / 直播 / 品类大盘用社区工具。
 
 ```bash
 # 商品榜（新品 / 销量 / 热推，带国家、品类筛选）
-python3 scripts/vendor/fastmoss-rpa/fastmoss_rpa.py filter \
-  --section products --country 美国 --category "珠宝及饰品" \
-  --pages 5 --out data/raw/products_us.csv
+python3 scripts/fastmoss_filtered.py --board new --pages 5 \
+  --session <bsk-session> --out data/raw/products_new_us.csv
 
 # 达人 / 店铺 / 广告 / 素材 / 直播榜
 python3 scripts/vendor/fastmoss-rpa/fastmoss_rpa.py scrape \
@@ -68,8 +69,8 @@ python3 scripts/vendor/fastmoss-rpa/fastmoss_rpa.py market base \
 
 ## 提取技巧
 
-- 优先页面内的 JSON 接口（打开开发者工具看 Network，或 `bsk evaluate` 里 `fetch()` 同源接口），无分页、最稳定；
-- 其次读表格：动态读 `<thead>` 表头，字段自适应，FastMoss 改列名不用改代码；
+- 读表格：动态读 `<thead>` 表头，字段自适应，FastMoss 改列名不用改代码；
+- 定位控件用 `bsk snapshot` 的文本引用，点击/翻页用文本标签选择器，避免快照 ref 过期；
 - 字段说明见 [references/fastmoss-fields.md](../../references/fastmoss-fields.md)，
   完整的 API 契约见 `scripts/vendor/fastmoss-rpa/references/api_notes.md`。
 

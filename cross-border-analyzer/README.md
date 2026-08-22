@@ -5,7 +5,7 @@
 
 > 美国 时尚配饰 近 7 天 商品销量榜 Top 100
 
-插件会自动完成：**意图解析 → FastMoss 数据抓取 → 清洗 → 评分 → 输出报告、交互仪表盘和 Excel 排名表**。
+插件会自动完成：**意图解析 → FastMoss 数据抓取 → 清洗 → 评分 → 输出报告、交互仪表盘和 CSV 排名表**。
 
 评分模型默认按"美国时尚配件 / 平价饰品"类目调校，权重可改。
 
@@ -15,7 +15,7 @@
 - **FastMoss 七大模块抓取**：商品 / 达人 / 店铺 / 广告 / 素材 / 直播 / 品类大盘，复用社区开源工具 fastmoss-rpa；
 - **自动清洗**：中英文列名别名自适应（排名、价格、销量、GMV、佣金率、上架天数等），无需手动整理；
 - **评分模型**：每个商品输出市场热度、可做性、综合潜力三个分数，并标注暴涨新星 / 价格战红海 / 高佣爆款等风险信号；
-- **三类输出**：Markdown 分析报告、交互式 HTML 仪表盘（价格/销量/品类筛选）、Excel 友好的 CSV 排名表；
+- **三类输出**：Markdown 分析报告、交互式 HTML 仪表盘（价格/销量/品类筛选）、CSV 排名表（Excel 可直接打开）；
 - **品类自适应**：品类以实际抓取到的数据范围为准，不写死；种子映射表仅用于抓取前的筛选参数；
 - **多通道降级**：bsk 浏览器自动化 → Codex 内嵌浏览器 → 手动导入 CSV，总有一条路能跑通。
 
@@ -46,7 +46,7 @@ cross-border-analyzer/
 │   ├── scoring.md                   评分模型说明与调参
 │   └── fastmoss-fields.md           FastMoss 字段说明与提取方法
 ├── assets/sample/                   示例数据（24 款饰品，用于演示）
-├── data/raw/                        已抓取的真实榜单数据（新品榜 245 / 销量榜 260）
+├── data/raw/                        已抓取的真实榜单数据（新品榜 433 / 销量榜 493）
 ├── output/                          分析产物（报告 / 仪表盘 / 评分表）
 ├── THIRD_PARTY_NOTICE.md            第三方组件与许可说明
 └── README.md                        本文档
@@ -55,18 +55,18 @@ cross-border-analyzer/
 ## 前置规则（rules.md）
 
 插件根目录的 `rules.md` 是**用户配置入口**：分析范围、商品筛选条件（价格/佣金/销量下限）、
-详情页补充范围与标签阈值、评分权重、抓取参数都在这里设置。修改后直接生效，无需改代码。
+输出偏好、抓取参数都在这里设置。修改后直接生效，无需改代码。
+评分权重见 `references/scoring.md`。
 
 **里面的值都是默认值，不是写死**：每次分析时你可以临时指定国家（美国 / 英国 / 印尼…）、
 类目（时尚配件 / 美妆个护 / 女装…及子类）、榜单（商品 / 达人 / 店铺 / 广告 / 素材 / 直播 /
 品类大盘）、时间（日 / 周 / 月 / 自定义日期）和数量；你没指定的才用 `rules.md` 的默认值。
 
-## 详情页补充（成交渠道占比）
+## 规划中（暂缓）
 
-对评分总结出的 Top N 商品（`rules.md` 第 3 节），用 browser-skill 打开 FastMoss
-商品详情页，提取**成交渠道占比**（商品卡 / 店铺自营号 / 达人带货）和带货达人数，
-并按阈值打"达人依赖型 / 自然流量型"标签后写回评分表。
-该指标决定爆品是吃商品卡自然流量还是靠达人带货，直接影响跟款策略。
+- 详情页补充：成交渠道占比（商品卡 / 店铺自营号 / 达人带货）+ 带货达人数，
+  用于判断爆品吃商品卡自然流量还是达人带货。
+- 国内货源选品联动（1688 / 拼多多）、定时自动抓取。
 
 ## 安装
 
@@ -114,20 +114,19 @@ bsk doctor
 
 ```bash
 # 1. 抓取（需要 bsk 已连接；示例数据可跳过这步）
-python3 scripts/vendor/fastmoss-rpa/fastmoss_rpa.py filter \
-  --section products --country 美国 --category "时尚配件" \
-  --pages 5 --out data/raw/products_us.csv
+python3 scripts/fastmoss_filtered.py --board new \
+  --pages 5 --session <bsk-session> --out data/raw/products_new_us.csv
 
 # 2. 清洗
-python3 scripts/normalize.py data/raw/products_us.csv data/raw/normalized.csv
+python3 scripts/normalize.py data/raw/products_new_us.csv data/raw/normalized.csv
 
 # 3. 评分
 python3 scripts/score.py data/raw/normalized.csv data/raw/scored.csv
 
 # 4. 报告 + 仪表盘
-python3 scripts/report.py data/raw/scored.csv output/report.md \
-  --query "美国 珠宝及饰品 近7天 商品销量榜 Top 100"
-python3 scripts/dashboard.py data/raw/scored.csv output/dashboard.html
+python3 scripts/report.py data/raw/scored.csv output/products_new/report.md \
+  --query "美国 时尚配件 近30天 新品榜"
+python3 scripts/dashboard.py data/raw/scored.csv output/products_new/dashboard.html
 
 # 用示例数据直接跑（无需抓取）：
 python3 scripts/normalize.py assets/sample/products_sales_us.csv /tmp/n.csv
@@ -140,9 +139,9 @@ python3 scripts/dashboard.py /tmp/s.csv /tmp/dashboard.html
 
 | 产物 | 路径 | 说明 |
 |---|---|---|
-| 分析报告 | `output/<时间戳>/report.md` | 需求复述、市场概览、Top 榜单、选品建议、风险提示 |
-| 交互仪表盘 | `output/<时间戳>/dashboard.html` | 价格分布、销量散点、潜力 Top 20、可筛选商品表 |
-| 评分排名表 | `output/<时间戳>/scored.csv` | UTF-8 BOM，Excel 直接打开，含三个分数与标记 |
+| 分析报告 | `output/<榜单>/report.md` | 需求复述、市场概览、Top 榜单、选品建议、风险提示 |
+| 交互仪表盘 | `output/<榜单>/dashboard.html` | 价格分布、销量散点、潜力 Top 20、可筛选商品表 |
+| 评分排名表 | `output/<榜单>/scored.csv` | UTF-8 BOM，Excel 直接打开，含三个分数与标记 |
 | 原始数据 | `data/raw/`、`data/import/` | 原始字段不改，可回溯 |
 
 ## 评分模型

@@ -18,6 +18,7 @@ from datetime import date
 CANONICAL = [
     "rank", "name", "price", "sales7", "gmv7", "sales_total", "gmv_total",
     "commission", "listed_days", "shop", "category", "rating", "reviews",
+    "sales_growth",
 ]
 
 ALIASES = {
@@ -38,6 +39,8 @@ ALIASES = {
     "category": ["品类", "类目", "category", "一级类目", "二级类目"],
     "rating": ["评分", "店铺评分", "商品评分", "rating", "score"],
     "reviews": ["评论数", "评论", "评价数", "reviews", "review count"],
+    "sales_growth": ["销量增长率", "周期销量增长", "近7天销量增长率", "环比",
+                     "sales_growth", "growth"],
 }
 
 
@@ -68,13 +71,19 @@ def parse_num(value):
     if s in ("", "-", "--", "—", "NA", "N/A", "null", "None"):
         return ""
     s = s.replace(",", "").replace("$", "").replace("¥", "").replace("%", "")
-    s = s.replace("万", "0000")
-    s = s.replace("k", "000").replace("K", "000")
-    s = s.replace("m", "000000").replace("M", "000000")
+    mult = 1
+    if "亿" in s:
+        mult, s = 100_000_000, s.replace("亿", "")
+    elif "万" in s:
+        mult, s = 10_000, s.replace("万", "")
+    elif "K" in s or "k" in s:
+        mult, s = 1_000, s.replace("K", "").replace("k", "")
+    elif "M" in s or "m" in s:
+        mult, s = 1_000_000, s.replace("M", "").replace("m", "")
     if re.search(r"[^\d.\-eE+]", s):
         return ""
     try:
-        return str(float(s))
+        return str(round(float(s) * mult, 2))
     except ValueError:
         return ""
 
@@ -134,7 +143,7 @@ def main():
             for canon, idx in mapping.items():
                 val = row[idx] if idx < len(row) else ""
                 if canon in ("price", "sales7", "gmv7", "sales_total", "gmv_total",
-                             "commission", "rating", "reviews"):
+                             "commission", "rating", "reviews", "sales_growth"):
                     val = parse_num(val)
                 elif canon == "listed_days":
                     val = parse_days(val)

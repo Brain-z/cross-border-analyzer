@@ -17,9 +17,10 @@ import re
 # ---------------------------------------------------------------------------
 
 # Next-page click — same selector in every board.
+# 注意：不要用 `li[class*=next]`，会命中分页省略号导致翻页中断；用 ant 分页的 next 类。
 NEXT_PAGE_JS = """
 (() => {
-  const sel = 'li[title="\\u4e0b\\u4e00\\u9875"], li[class*=next]:not([class*=disabled])';
+  const sel = 'li[title="\\u4e0b\\u4e00\\u9875"], li.ant-pagination-next:not(.ant-pagination-disabled)';
   const btn = document.querySelector(sel);
   if (!btn) return JSON.stringify({clicked: false});
   btn.click();

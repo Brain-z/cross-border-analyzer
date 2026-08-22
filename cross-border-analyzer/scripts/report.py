@@ -89,7 +89,8 @@ def main():
     lines.append("")
     lines.append("| # | 商品 | 价格($) | 周期销量 | 佣金率 | 热度 | 可做性 | 潜力 | 标记 |")
     lines.append("|---|---|---|---|---|---|---|---|---|")
-    for i, r in enumerate(rows[:10], 1):
+    top = sorted(rows, key=lambda r: f(r.get("potential")) or 0, reverse=True)[:10]
+    for i, r in enumerate(top, 1):
         name = (r.get("name") or "未知")[:30]
         price = f(r.get("price"))
         s7 = f(r.get("sales7"))
