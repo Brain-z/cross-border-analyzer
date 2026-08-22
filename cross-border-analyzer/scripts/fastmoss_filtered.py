@@ -135,7 +135,12 @@ def verify_dates(start, end, session):
 
 
 def parse_rows(header, items):
-    names = [HEADER_MAP.get(h, "") for h in header]
+    names = []
+    for h in header:
+        if h in HEADER_MAP:
+            names.append(HEADER_MAP[h] or "")  # None（如"操作"列）→ 丢弃
+        else:
+            names.append(h)  # 页面新增的未知列：原样透传
     rows = []
     for item in items:
         cells = item["cells"] if isinstance(item, dict) else item
@@ -218,10 +223,15 @@ def scrape(url, out, session, start=None, end=None, time_label=None,
         time.sleep(page_sleep)
 
     rows = list(all_rows.values())
+    fieldnames = list(FIELDS)
+    for r in rows:
+        for k in r:
+            if k not in fieldnames:
+                fieldnames.append(k)
     os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
     import csv
     with open(out, "w", encoding="utf-8-sig", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=FIELDS)
+        w = csv.DictWriter(fh, fieldnames=fieldnames, extrasaction="ignore")
         w.writeheader()
         w.writerows(rows)
     print(f"OK {out}: {len(rows)} rows")

@@ -169,12 +169,29 @@ def main():
         mapping = map_columns(header)
         rows = list(reader)
 
+    # 未知列原样透传：规范列之后按原始顺序追加（同名加后缀避免重复）
+    mapped_idx = set(mapping.values())
+    extra = []
+    extra_names = set()
+    for i, h in enumerate(header):
+        if i in mapped_idx or not h.strip():
+            continue
+        name = h.strip()
+        if name in extra_names:
+            n, base = 2, name
+            while f"{base}_{n}" in extra_names:
+                n += 1
+            name = f"{base}_{n}"
+        extra_names.add(name)
+        extra.append((i, name))
+
+    fieldnames = CANONICAL + [h for _, h in extra] + ["source"]
     os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
     with open(args.output, "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(CANONICAL + ["source"])
+        writer.writerow(fieldnames)
         for row in rows:
-            out = [""] * (len(CANONICAL) + 1)
+            out = {c: "" for c in CANONICAL}
             for canon, idx in mapping.items():
                 val = row[idx] if idx < len(row) else ""
                 if canon in ("price", "sales7", "gmv7", "sales_total", "gmv_total",
@@ -182,12 +199,16 @@ def main():
                     val = parse_num(val)
                 elif canon == "listed_days":
                     val = parse_days(val)
-                out[CANONICAL.index(canon)] = val.strip()
-            out[-1] = os.path.basename(args.input)
-            writer.writerow(out)
+                out[canon] = val.strip()
+            for i, name in extra:
+                out[name] = row[i].strip() if i < len(row) else ""
+            out["source"] = os.path.basename(args.input)
+            writer.writerow([out.get(n, "") for n in fieldnames])
 
     missing = [c for c in CANONICAL if c not in mapping and c not in OPTIONAL]
     print(f"已生成: {args.output}（{len(rows)} 行）")
+    if extra:
+        print(f"原样保留的额外列: {', '.join(n for _, n in extra)}")
     if missing:
         print(f"未匹配的规范列: {', '.join(missing)}（原列保留在 source 对应的原始行）")
 
