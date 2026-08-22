@@ -85,12 +85,34 @@ def parse_num(value):
         mult, s = 1_000, s.replace("K", "").replace("k", "")
     elif "M" in s or "m" in s:
         mult, s = 1_000_000, s.replace("M", "").replace("m", "")
+    # 区间值（10-20、9.90 - 12.90、8–20、10~20、10万-20万）取中值，避免被当缺失
+    m = re.match(r"^\s*(-?\d+(?:\.\d+)?)\s*[-~–—至]\s*(-?\d+(?:\.\d+)?)\s*$", s)
+    if m:
+        return str(round((float(m.group(1)) + float(m.group(2))) / 2 * mult, 2))
     if re.search(r"[^\d.\-eE+]", s):
         return ""
     try:
         return str(round(float(s) * mult, 2))
     except ValueError:
         return ""
+
+
+def _selftest():
+    cases = {
+        "10-20": "15.0",
+        "9.90 - 12.90": "11.4",
+        "8–20": "14.0",
+        "10~20": "15.0",
+        "10万-20万": "150000.0",
+        "-5": "-5.0",
+        "10-15%": "12.5",
+        "2026-08-22": "",
+        "12": "12.0",
+    }
+    for raw, want in cases.items():
+        got = parse_num(raw)
+        assert got == want, f"parse_num({raw!r}) = {got!r}, want {want!r}"
+    print("parse_num selftest OK")
 
 
 def parse_days(value):
@@ -124,9 +146,17 @@ def map_columns(header):
 
 def main():
     ap = argparse.ArgumentParser(description="规范化 CSV 列")
-    ap.add_argument("input", help="输入 CSV")
-    ap.add_argument("output", help="输出 CSV")
+    ap.add_argument("input", nargs="?", help="输入 CSV")
+    ap.add_argument("output", nargs="?", help="输出 CSV")
+    ap.add_argument("--selftest", action="store_true",
+                    help="运行 parse_num 自检后退出")
     args = ap.parse_args()
+
+    if args.selftest:
+        _selftest()
+        return
+    if not args.input or not args.output:
+        ap.error("input 和 output 必填（或使用 --selftest）")
 
     if not os.path.isfile(args.input):
         sys.exit(f"输入文件不存在: {args.input}")
