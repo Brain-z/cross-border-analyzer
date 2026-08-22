@@ -17,6 +17,7 @@
 | 品类 | 类目 | category |
 | 评分 / 店铺评分 | 店铺或商品评分 | rating |
 | 评论数 | 评论数量 | reviews |
+| 商品图 | 商品缩略图地址（抓取时取自商品单元格首个 img） | image |
 
 ## 提取 JS（bsk evaluate 用）
 
@@ -30,7 +31,9 @@ FastMoss 页面结构会变，优先读表头做字段自适应：
   for (const t of tables) {
     for (const tr of t.querySelectorAll('tr')) {
       const cells = Array.from(tr.querySelectorAll('th,td')).map(c => c.innerText.trim());
-      if (cells.length) rows.push(cells);
+      const tds = Array.from(tr.querySelectorAll('td'));
+      const img = tds[1] ? tds[1].querySelector('img') : null;
+      if (cells.length) rows.push({cells, img: img ? img.src : ''});
     }
   }
   return { rows };

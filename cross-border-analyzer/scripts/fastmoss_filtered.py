@@ -22,7 +22,7 @@ sys.path.insert(0, VENDOR)
 FIELDS = ["page", "rank", "product_name", "price", "listed_at", "country",
           "shop", "shop_total_sales", "category", "commission",
           "sales_period", "sales_growth", "gmv_period",
-          "total_sales", "total_gmv"]
+          "total_sales", "total_gmv", "image"]
 
 # 新版 FastMoss 分页：真正的"下一页"按钮是 li.ant-pagination-next，
 # 社区工具的 li[class*=next] 可能误点"跳页省略号"（before/after-jump-next）。
@@ -73,8 +73,12 @@ EXTRACT_JS = """(() => {
     : [];
   const rows = [];
   trs.forEach(r => {
-    const cells = Array.from(r.querySelectorAll('td')).map(c => c.innerText.trim());
-    if (cells.length >= 6 && (cells[1] || '').includes('售价')) rows.push(cells);
+    const tds = Array.from(r.querySelectorAll('td'));
+    const cells = tds.map(c => c.innerText.trim());
+    if (cells.length >= 6 && (cells[1] || '').includes('售价')) {
+      const img = tds[1] ? tds[1].querySelector('img') : null;
+      rows.push({cells, img: img ? img.src : ''});
+    }
   });
   return JSON.stringify({header, rowCount: rows.length, rows});
 })()"""
@@ -106,10 +110,12 @@ def verify_dates(start, end, session):
     return isinstance(vals, list) and vals[:2] == [start, end]
 
 
-def parse_rows(header, cells_list):
+def parse_rows(header, items):
     names = [HEADER_MAP.get(h, "") for h in header]
     rows = []
-    for cells in cells_list:
+    for item in items:
+        cells = item["cells"] if isinstance(item, dict) else item
+        img = (item.get("img") if isinstance(item, dict) else "") or ""
         if len(cells) < 6:
             continue
         row = {}
@@ -133,6 +139,7 @@ def parse_rows(header, cells_list):
             else:
                 row[name] = cells[i].strip()
         if row.get("product_name"):
+            row["image"] = img
             rows.append(row)
     return rows
 

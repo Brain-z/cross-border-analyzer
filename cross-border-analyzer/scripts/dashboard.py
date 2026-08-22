@@ -84,7 +84,7 @@ svg { width:100%; height:auto; }
   <div class="panel"><h2>Top 20 综合潜力</h2><svg id="bars" viewBox="0 0 600 420"></svg></div>
   <div class="panel"><h2>商品列表</h2><div style="max-height:480px;overflow:auto">
     <table class="tbl" id="grid"><thead><tr>
-      <th>排名</th><th>商品</th><th>价格($)</th><th>周期销量</th><th>佣金率</th>
+      <th>排名</th><th>图片</th><th>商品</th><th>价格($)</th><th>周期销量</th><th>佣金率</th>
       <th>热度</th><th>可做性</th><th>潜力</th><th>标记</th>
     </tr></thead><tbody></tbody></table>
   </div></div>
@@ -100,6 +100,8 @@ const catSel = document.getElementById('catSel');
 cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; catSel.appendChild(o); });
 
 const fmt = (v, d=1) => v == null || isNaN(v) ? '-' : Number(v).toLocaleString('zh-CN', {maximumFractionDigits: d});
+const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const tagCls = m => m.includes('暴涨新星') ? 'new' : m.includes('价格战红海') ? 'red' :
   m.includes('高佣') ? 'comm' : m.includes('高潜力') ? 'pot' : m.includes('谨慎') ? 'care' : '';
 const svgNS = 'http://www.w3.org/2000/svg';
@@ -197,7 +199,9 @@ function renderGrid(arr) {
     const tr = document.createElement('tr');
     const tags = (r.markers||'').split(';').filter(Boolean).map(m =>
       '<span class="tag '+tagCls(m)+'">'+m+'</span>').join('');
-    tr.innerHTML = '<td>'+(i+1)+'</td><td>'+(r.name||'-')+'</td><td>'+fmt(r.price)+
+    const img = r.image ? '<img src="'+esc(r.image)+'" width="56" height="56" '+
+      'style="object-fit:cover;border-radius:6px" loading="lazy" alt="">' : '-';
+    tr.innerHTML = '<td>'+(i+1)+'</td><td>'+img+'</td><td>'+esc(r.name||'-')+'</td><td>'+fmt(r.price)+
       '</td><td>'+fmt(r.sales7,0)+'</td><td>'+fmt(r.commission)+'%</td><td>'+fmt(r.market_heat)+
       '</td><td>'+fmt(r.viability)+'</td><td>'+fmt(r.potential)+'</td><td>'+tags+'</td>';
     tb.appendChild(tr);

@@ -18,8 +18,10 @@ from datetime import date
 CANONICAL = [
     "rank", "name", "price", "sales7", "gmv7", "sales_total", "gmv_total",
     "commission", "listed_days", "shop", "category", "rating", "reviews",
-    "sales_growth",
+    "sales_growth", "image",
 ]
+
+OPTIONAL = {"image"}
 
 ALIASES = {
     "rank": ["排名", "rank", "ranking", "序号", "top"],
@@ -41,6 +43,9 @@ ALIASES = {
     "reviews": ["评论数", "评论", "评价数", "reviews", "review count"],
     "sales_growth": ["销量增长率", "周期销量增长", "近7天销量增长率", "环比",
                      "sales_growth", "growth"],
+    "image": ["图片", "商品图", "商品图片", "图片地址", "图片链接", "图片url",
+              "image", "img", "img_src", "image_url", "product image",
+              "缩略图", "thumbnail"],
 }
 
 
@@ -151,7 +156,7 @@ def main():
             out[-1] = os.path.basename(args.input)
             writer.writerow(out)
 
-    missing = [c for c in CANONICAL if c not in mapping]
+    missing = [c for c in CANONICAL if c not in mapping and c not in OPTIONAL]
     print(f"已生成: {args.output}（{len(rows)} 行）")
     if missing:
         print(f"未匹配的规范列: {', '.join(missing)}（原列保留在 source 对应的原始行）")
