@@ -38,7 +38,8 @@ cross-border-analyzer/
 │   ├── normalize.py                 列名识别与清洗
 │   ├── score.py                     评分模型
 │   ├── report.py                    Markdown 报告生成
-│   └── dashboard.py                 交互式 HTML 仪表盘生成
+│   ├── dashboard.py                 交互式 HTML 仪表盘生成
+│   └── fastmoss_filtered.py         bsk 编排：销量榜 URL / 月榜 / 日期范围抓取
 ├── references/
 │   ├── categories.md                FastMoss 品类种子映射表（以实际数据为准）
 │   ├── scoring.md                   评分模型说明与调参

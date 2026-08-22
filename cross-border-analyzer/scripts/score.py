@@ -129,12 +129,18 @@ def main():
         mom_map = normalize_minmax([m for m in
                                     [(s7 / t) if (s7 is not None and t and t > 0) else None
                                      for s7, t in zip(sales7, totals)] if m is not None] or [0])
+        growth_pct = f(r.get("sales_growth"))
+        gp_score = None
+        if growth_pct is not None:
+            gp_score = min(100.0, max(0.0, 50.0 + growth_pct))
         if s7 is None:
             gs = 50.0
         else:
             heat = heat_map.get(s7, 60.0)
             mom = mom_map.get(momentum, 50.0)
             gs = 0.6 * heat + 0.4 * mom
+            if gp_score is not None:
+                gs = 0.5 * heat + 0.25 * mom + 0.25 * gp_score
 
         cs = commission_score(rate)
         ls = lifecycle_score(days)
