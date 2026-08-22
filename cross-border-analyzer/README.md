@@ -33,21 +33,36 @@ cross-border-analyzer/
 ├── skills/
 │   ├── cross-border-analysis/       总控 skill：意图解析、路由、评分、报告、仪表盘
 │   └── fastmoss-fetch/              FastMoss 抓取 skill：复用社区工具 + 降级链
+├── rules.md                         用户前置规则（筛选条件、Top N、阈值，改这里即改行为）
 ├── scripts/
 │   ├── vendor/fastmoss-rpa/         社区 fastmoss_rpa.py（原样打包，仅改 bsk 路径查找）
 │   ├── normalize.py                 列名识别与清洗
 │   ├── score.py                     评分模型
 │   ├── report.py                    Markdown 报告生成
 │   ├── dashboard.py                 交互式 HTML 仪表盘生成
-│   └── fastmoss_filtered.py         bsk 编排：销量榜 URL / 月榜 / 日期范围抓取
+│   └── fastmoss_filtered.py         bsk 编排：销量榜 URL / 月榜 / 日期范围抓取（社区工具缺的能力）
 ├── references/
 │   ├── categories.md                FastMoss 品类种子映射表（以实际数据为准）
 │   ├── scoring.md                   评分模型说明与调参
 │   └── fastmoss-fields.md           FastMoss 字段说明与提取方法
 ├── assets/sample/                   示例数据（24 款饰品，用于演示）
+├── data/raw/                        已抓取的真实榜单数据（新品榜 245 / 销量榜 260）
+├── output/                          分析产物（报告 / 仪表盘 / 评分表）
 ├── THIRD_PARTY_NOTICE.md            第三方组件与许可说明
 └── README.md                        本文档
 ```
+
+## 前置规则（rules.md）
+
+插件根目录的 `rules.md` 是**用户配置入口**：分析范围、商品筛选条件（价格/佣金/销量下限）、
+详情页补充范围与标签阈值、评分权重、抓取参数都在这里设置。修改后直接生效，无需改代码。
+
+## 详情页补充（成交渠道占比）
+
+对评分总结出的 Top N 商品（`rules.md` 第 3 节），用 browser-skill 打开 FastMoss
+商品详情页，提取**成交渠道占比**（商品卡 / 店铺自营号 / 达人带货）和带货达人数，
+并按阈值打"达人依赖型 / 自然流量型"标签后写回评分表。
+该指标决定爆品是吃商品卡自然流量还是靠达人带货，直接影响跟款策略。
 
 ## 安装
 
@@ -96,7 +111,7 @@ bsk doctor
 ```bash
 # 1. 抓取（需要 bsk 已连接；示例数据可跳过这步）
 python3 scripts/vendor/fastmoss-rpa/fastmoss_rpa.py filter \
-  --section products --country 美国 --category "珠宝及饰品" \
+  --section products --country 美国 --category "时尚配件" \
   --pages 5 --out data/raw/products_us.csv
 
 # 2. 清洗
