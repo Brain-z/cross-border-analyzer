@@ -145,6 +145,7 @@ def parse_rows(header, items):
 
 
 def scrape(url, out, session, start=None, end=None, time_label=None,
+           country="美国", category="时尚配件",
            pages=25, nav_sleep=5.0, page_sleep=3.5):
     code, out_s, err = bsk(["navigate", url, "--wait-until", "load", "--timeout", "45s"],
                            session)
@@ -160,9 +161,9 @@ def scrape(url, out, session, start=None, end=None, time_label=None,
     if time_label:
         click_label(time_label, session)
         time.sleep(2)
-    click_label("美国", session)
+    click_label(country, session)
     time.sleep(2)
-    click_label("时尚配件", session)
+    click_label(category, session)
     time.sleep(3)
 
     all_rows = {}
@@ -210,19 +211,35 @@ def main():
     ap.add_argument("--pages", type=int, default=25)
     ap.add_argument("--page-sleep", type=float, default=3.5)
     ap.add_argument("--nav-sleep", type=float, default=5.0)
+    ap.add_argument("--country", default="美国",
+                    help="地区，按页面标签写，如 美国 / 英国 / 印尼（默认 美国）")
+    ap.add_argument("--category", default="时尚配件",
+                    help="品类，按页面标签写，如 时尚配件 / 美妆个护（默认 时尚配件）")
+    ap.add_argument("--start", default=None,
+                    help="新品榜开始日期 YYYY-MM-DD（默认近 30 天）")
+    ap.add_argument("--end", default=None,
+                    help="新品榜结束日期 YYYY-MM-DD（默认今天）")
+    ap.add_argument("--time-label", default=None,
+                    help="销量榜时间范围：月榜 / 周榜 / 日榜（默认 月榜）")
     args = ap.parse_args()
 
     if args.board == "new":
         url = "https://www.fastmoss.com/zh/e-commerce/newProducts"
-        end = datetime.date.today()
-        start = end - datetime.timedelta(days=29)
+        end = args.end or datetime.date.today().isoformat()
+        start = args.start or (datetime.date.fromisoformat(end)
+                               - datetime.timedelta(days=29)).isoformat()
         scrape(url, args.out, args.session,
-               start=start.isoformat(), end=end.isoformat(),
-               pages=args.pages, nav_sleep=args.nav_sleep, page_sleep=args.page_sleep)
+               start=start, end=end,
+               country=args.country, category=args.category,
+               pages=args.pages, nav_sleep=args.nav_sleep,
+               page_sleep=args.page_sleep)
     else:
         url = "https://www.fastmoss.com/zh/e-commerce/saleslist"
-        scrape(url, args.out, args.session, time_label="月榜",
-               pages=args.pages, nav_sleep=args.nav_sleep, page_sleep=args.page_sleep)
+        scrape(url, args.out, args.session,
+               time_label=args.time_label or "月榜",
+               country=args.country, category=args.category,
+               pages=args.pages, nav_sleep=args.nav_sleep,
+               page_sleep=args.page_sleep)
 
 
 if __name__ == "__main__":

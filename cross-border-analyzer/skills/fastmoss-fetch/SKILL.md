@@ -24,9 +24,17 @@ description: "从 FastMoss（fastmoss.com）抓取 TikTok Shop 榜单数据：�
 且只覆盖新品榜）；达人 / 店铺 / 广告 / 素材 / 直播 / 品类大盘用社区工具。
 
 ```bash
-# 商品榜（新品 / 销量 / 热推，带国家、品类筛选）
+# 商品榜（新品 / 销量，国家、品类、时间范围全部走参数，禁止改脚本源码）
 python3 scripts/fastmoss_filtered.py --board new --pages 5 \
-  --session <bsk-session> --out data/raw/products_new_us.csv
+  --country 英国 --category 美妆个护 --start 2026-07-01 --end 2026-07-31 \
+  --session <bsk-session> --out data/raw/products_new_gb.csv
+
+python3 scripts/fastmoss_filtered.py --board sales --pages 5 \
+  --country 美国 --category 时尚配件 --time-label 月榜 \
+  --session <bsk-session> --out data/raw/products_sales_us.csv
+
+# 参数说明：--country/--category 按页面标签写；--start/--end 仅新品榜生效
+# （不填默认近 30 天）；--time-label 仅销量榜生效（月榜/周榜/日榜，默认月榜）。
 
 # 达人 / 店铺 / 广告 / 素材 / 直播榜
 python3 scripts/vendor/fastmoss-rpa/fastmoss_rpa.py scrape \
