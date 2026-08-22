@@ -47,6 +47,16 @@ HEADER_MAP = {
 BSK = os.path.expanduser("~/.local/bin/bsk")
 
 
+def parse_date(s):
+    """把用户输入的日期归一化成 date，兼容 2026-07-01 / 2026-7-1 / 2026/07/01。"""
+    s = str(s).strip()
+    s = s.replace("/", "-").replace(".", "-")
+    try:
+        return datetime.date.fromisoformat(s)
+    except ValueError:
+        return datetime.datetime.strptime(s, "%Y-%m-%d").date()
+
+
 def bsk(args, session, timeout=60):
     r = subprocess.run([BSK] + args + ["--session", session],
                        capture_output=True, text=True, timeout=timeout)
@@ -225,11 +235,11 @@ def main():
 
     if args.board == "new":
         url = "https://www.fastmoss.com/zh/e-commerce/newProducts"
-        end = args.end or datetime.date.today().isoformat()
-        start = args.start or (datetime.date.fromisoformat(end)
-                               - datetime.timedelta(days=29)).isoformat()
+        end = parse_date(args.end) if args.end else datetime.date.today()
+        start = parse_date(args.start) if args.start else \
+            end - datetime.timedelta(days=29)
         scrape(url, args.out, args.session,
-               start=start, end=end,
+               start=start.isoformat(), end=end.isoformat(),
                country=args.country, category=args.category,
                pages=args.pages, nav_sleep=args.nav_sleep,
                page_sleep=args.page_sleep)
