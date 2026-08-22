@@ -40,7 +40,8 @@ _SESSIONS = {}
 
 def _start(name):
     p = subprocess.run([BSK, "session", "start", "--json"],
-                       capture_output=True, text=True, timeout=60)
+                       capture_output=True, text=True,
+                       encoding="utf-8", errors="replace", timeout=60)
     if p.returncode != 0:
         raise RuntimeError(f"bsk session start failed: {p.stderr.strip()}")
     sid = json.loads(p.stdout)["session_id"]
@@ -58,12 +59,14 @@ def call(action, args, session):
         url = args.get("url", "")
         p = subprocess.run([BSK, "navigate", url, "--session", sid,
                             "--wait-until", "load", "--timeout", "30s"],
-                           capture_output=True, text=True, timeout=45)
+                           capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=45)
         return {"ok": p.returncode == 0, "data": p.stdout.strip()}
     if action == "evaluate":
         code = args.get("code", "")
         p = subprocess.run([BSK, "evaluate", code, "--session", sid, "--timeout", "30s"],
-                           capture_output=True, text=True, timeout=45)
+                           capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=45)
         out = (p.stdout or "").strip()
         if p.returncode != 0 or not out:
             return {"ok": False, "error": {"message": (p.stderr or "empty output").strip()}}
@@ -76,12 +79,14 @@ def call(action, args, session):
         cmd = [BSK, "screenshot", "--session", sid]
         if out_path:
             cmd += ["--out", out_path]
-        p = subprocess.run(cmd, capture_output=True, text=True, timeout=45)
+        p = subprocess.run(cmd, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=45)
         return {"ok": p.returncode == 0, "data": p.stdout.strip()}
     if action == "close_session":
         if session in _SESSIONS:
             subprocess.run([BSK, "session", "stop", _SESSIONS.pop(session)],
-                           capture_output=True, text=True, timeout=30)
+                           capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=30)
         return {"ok": True}
     return {"ok": False, "error": {"message": f"unknown action: {action}"}}
 
@@ -102,12 +107,14 @@ def evaluate(code, session):
 def session_stop(name=None):
     if name is None:
         for _n, _s in list(_SESSIONS.items()):
-            subprocess.run([BSK, "session", "stop", _s], capture_output=True, text=True, timeout=30)
+            subprocess.run([BSK, "session", "stop", _s], capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", timeout=30)
         _SESSIONS.clear()
         return
     sid = _SESSIONS.pop(name, None)
     if sid:
-        subprocess.run([BSK, "session", "stop", sid], capture_output=True, text=True, timeout=30)
+        subprocess.run([BSK, "session", "stop", sid], capture_output=True,
+                       text=True, encoding="utf-8", errors="replace", timeout=30)
 
 
 atexit.register(session_stop)

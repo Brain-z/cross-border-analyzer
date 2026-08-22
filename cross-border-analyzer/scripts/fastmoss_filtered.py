@@ -59,7 +59,8 @@ def parse_date(s):
 
 def bsk(args, session, timeout=60):
     r = subprocess.run([BSK] + args + ["--session", session],
-                       capture_output=True, text=True, timeout=timeout)
+                       capture_output=True, text=True,
+                       encoding="utf-8", errors="replace", timeout=timeout)
     return r.returncode, (r.stdout or "").strip(), (r.stderr or "").strip()
 
 
