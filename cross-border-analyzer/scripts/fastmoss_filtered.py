@@ -10,6 +10,7 @@ import argparse
 import datetime
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -44,7 +45,19 @@ HEADER_MAP = {
     "总销量": "total_sales", "总销售额": "total_gmv", "操作": None,
 }
 
-BSK = os.path.expanduser("~/.local/bin/bsk")
+def _resolve_bsk():
+    """跨平台查找 bsk：优先 BSK_BIN 环境变量，其次 PATH，最后 ~/.local/bin。"""
+    env = os.environ.get("BSK_BIN")
+    if env:
+        return env
+    found = shutil.which("bsk")
+    if found:
+        return found
+    local = os.path.expanduser("~/.local/bin/bsk")
+    return local if os.path.exists(local) else "bsk"
+
+
+BSK = _resolve_bsk()
 
 
 def parse_date(s):

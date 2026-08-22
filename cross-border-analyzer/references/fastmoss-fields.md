@@ -21,7 +21,8 @@
 
 ## 提取 JS（bsk evaluate 用）
 
-FastMoss 页面结构会变，优先读表头做字段自适应：
+FastMoss 页面结构会变，优先读表头做字段自适应；商品单元格里有缩略图时，
+把首个 `img.src` 一并取回（对应 `image` 列）：
 
 ```js
 (() => {
@@ -40,16 +41,16 @@ FastMoss 页面结构会变，优先读表头做字段自适应：
 })()
 ```
 
-保存输出 JSON 后转 CSV：
-
-```bash
-python3 scripts/fastmoss_fetch.py json2csv table.json data/raw/products.csv
-```
+榜单抓取直接走 `scripts/fastmoss_filtered.py`（商品榜）或
+`scripts/vendor/fastmoss-rpa/fastmoss_rpa.py`（其余模块），无需手工转 CSV；
+手工导出的文件放到 `data/import/` 后由 `scripts/normalize.py` 清洗。
 
 ## 更稳的替代：页面 JSON 接口
 
 打开开发者工具 Network，过滤 `api` / `json`，榜单数据往往来自同源 JSON 接口。
-在 `bsk evaluate` 里直接 `fetch()` 该接口可免翻页，返回 JSON 用上面命令落盘。
+在 `bsk evaluate` 里直接 `fetch()` 该接口可免翻页（参考
+`scripts/vendor/fastmoss-rpa/market_api.py`），返回 JSON 用 Python 标准库
+`json` / `csv` 落盘为 UTF-8 BOM CSV。
 
 ## 手动导出
 

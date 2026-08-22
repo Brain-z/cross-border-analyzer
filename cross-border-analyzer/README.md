@@ -95,7 +95,12 @@ bsk doctor
 <https://chromewebstore.google.com/detail/hhcmgoofomhgciiibhipgmgkgnoenaoi>
 → 添加至 Chrome → 扩展弹窗变绿。
 
-终端找不到 `bsk` 时执行 `source ~/.zshrc` 或重开终端。
+终端找不到 `bsk` 时重开终端（macOS `source ~/.zshrc`，Windows Git Bash
+`source ~/.bashrc`），或设置环境变量 `BSK_BIN` 指向 bsk 可执行文件。
+
+> **Windows 说明**：脚本全部显式使用 UTF-8（CSV 输出为 UTF-8 BOM，Excel 直接打开），
+> 不需要也不应该把脚本另存为 GBK/ANSI；若终端没有 `python3` 命令，用 `py -3` 或 `python`
+> 代替；bsk 找不到时设 `BSK_BIN`（如 `C:\path\to\bsk.exe`），脚本会自动优先读取。
 
 ### 3. 插件安装
 
@@ -174,6 +179,8 @@ python3 scripts/dashboard.py /tmp/s.csv /tmp/dashboard.html
 
 ## 开发与验证
 
+以下为仓库开发机（macOS）的校验命令，Windows 上不需要执行。
+
 ```bash
 # 插件校验（需 PyYAML）
 python3 /Users/zhangxinyu/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py cross-border-analyzer
@@ -187,7 +194,7 @@ python3 /Users/zhangxinyu/.codex/skills/.system/skill-creator/scripts/quick_vali
 
 | 现象 | 处理 |
 |---|---|
-| `bsk: command not found` | `source ~/.zshrc` 或重开终端；或直接 `/Users/zhangxinyu/.local/bin/bsk` |
+| `bsk: command not found` | 重开终端（macOS `source ~/.zshrc`，Windows Git Bash `source ~/.bashrc`）；或设 `BSK_BIN` 指向 bsk |
 | `bsk status` 提示 daemon 未运行 | `bsk daemon start` 后重试 |
 | `extension connected: 0` | 浏览器扩展未装或未连接，装好后弹窗变绿 |
 | 抓到 0 行数据 | 翻页太快，加 `--nav-sleep 6 --page-sleep 4` |
