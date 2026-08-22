@@ -195,7 +195,7 @@ python3 /Users/zhangxinyu/.codex/skills/.system/skill-creator/scripts/quick_vali
 | 现象 | 处理 |
 |---|---|
 | `bsk: command not found` | 重开终端（macOS `source ~/.zshrc`，Windows Git Bash `source ~/.bashrc`）；或设 `BSK_BIN` 指向 bsk |
-| `bsk status` 提示 daemon 未运行 | `bsk daemon start` 后重试 |
+| `bsk status` 提示 daemon 未运行 | 抓取脚本会自动执行 `bsk daemon start` 并重试；手动也可执行 `bsk daemon start` |
 | `extension connected: 0` | 浏览器扩展未装或未连接，装好后弹窗变绿 |
 | 抓到 0 行数据 | 翻页太快，加 `--nav-sleep 6 --page-sleep 4` |
 | 字段为空 | 多为 FastMoss 套餐权限限制，保留原样，不编造 |

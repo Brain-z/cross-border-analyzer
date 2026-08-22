@@ -71,9 +71,15 @@ def parse_date(s):
 
 
 def bsk(args, session, timeout=60):
-    r = subprocess.run([BSK] + args + ["--session", session],
-                       capture_output=True, text=True,
+    cmd = [BSK] + args + ["--session", session]
+    r = subprocess.run(cmd, capture_output=True, text=True,
                        encoding="utf-8", errors="replace", timeout=timeout)
+    if r.returncode != 0 and "daemon" in (r.stderr or "").lower():
+        subprocess.run([BSK, "daemon", "start"], capture_output=True, text=True,
+                       encoding="utf-8", errors="replace", timeout=timeout)
+        time.sleep(2)
+        r = subprocess.run(cmd, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=timeout)
     return r.returncode, (r.stdout or "").strip(), (r.stderr or "").strip()
 
 
